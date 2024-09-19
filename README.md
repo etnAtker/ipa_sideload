@@ -1,2 +1,2 @@
 # ipa_sideload
-Private ipa sideload repo.
+A private ipa sideload repo.
