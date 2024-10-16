@@ -1,7 +1,7 @@
 name: Generate Plists
 
 on:
-  workflow_dispatch:  # 手动触发
+  workflow_dispatch:
     inputs:
       branch:
         description: 'Branch to run workflow on'
@@ -13,9 +13,13 @@ jobs:
     runs-on: macos-latest
     steps:
       - name: Clear 'ipa' tag release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh release delete ipa --yes || echo "No release named 'ipa' found."
       - name: Clear 'plist' tag release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh release delete plist --yes || echo "No release named 'plist' found."
 
