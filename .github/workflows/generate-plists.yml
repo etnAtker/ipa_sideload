@@ -103,7 +103,7 @@ jobs:
             rm -rf ipa_contents "$ipa"
             
             
-            RESULT_URLS+="$PLIST_FILE \n$ITMS_URL_BASEhttps://github.com/etnAtker/ipa_sideload/releases/download/plist/$PLIST_FILE \n$ITMS_URL_BASEhttps://github.com/etnAtker/ipa_sideload/releases/download/plist/$PLIST_PROXY_FILE\n"
+            RESULT_URLS+="${PLIST_FILE} \n${ITMS_URL_BASE}https://github.com/etnAtker/ipa_sideload/releases/download/plist/${PLIST_FILE} \n${ITMS_URL_BASE}https://mirror.ghproxy.com/https://github.com/etnAtker/ipa_sideload/releases/download/plist/${PLIST_PROXY_FILE}\n"
           done
 
           echo -e "\nPlists:\n$RESULT_URLS"
