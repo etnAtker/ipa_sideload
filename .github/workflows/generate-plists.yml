@@ -79,7 +79,7 @@ jobs:
             
             # 解压 ipa 获取 Info.plist 文件
             unzip -q "$ipa" -d ipa_contents
-            INFO_PLIST=$(find ipa_contents -name "Info.plist" | head -n 1)
+            INFO_PLIST=$(find ipa_contents -path "*.app/Info.plist" | head -n 1)
 
             echo "$INFO_PLIST"
             # 使用 PlistBuddy 提取包名、版本号和显示名
