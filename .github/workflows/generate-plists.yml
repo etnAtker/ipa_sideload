@@ -13,7 +13,7 @@ jobs:
     runs-on: macos-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
   
       - name: Clear 'ipa' tag release
         env:
@@ -32,7 +32,7 @@ jobs:
     runs-on: macos-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Upload IPAs to 'ipa' release
         env:
@@ -54,7 +54,7 @@ jobs:
     runs-on: macos-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Install dependencies
         run: |
@@ -71,6 +71,7 @@ jobs:
           IPA_URL_BASE="https://github.com/etnAtker/ipa_sideload/releases/download/ipa"
           PLIST_TEMPLATE_PATH="plist_template.plist"
           
+          RESULT_URLS=""
           for ipa in $(gh release view ipa --json assets --jq '.assets[].name'); do
             # 下载 ipa 文件
             IPA_URL="$IPA_URL_BASE/$ipa"
@@ -81,7 +82,6 @@ jobs:
             unzip -q "$ipa" -d ipa_contents
             INFO_PLIST=$(find ipa_contents -path "*.app/Info.plist" | head -n 1)
 
-            echo "$INFO_PLIST"
             # 使用 PlistBuddy 提取包名、版本号和显示名
             BUNDLE_IDENTIFIER=$(/usr/libexec/PlistBuddy -c "Print CFBundleIdentifier" "$INFO_PLIST")
             BUNDLE_VERSION=$(/usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" "$INFO_PLIST")
@@ -101,5 +101,7 @@ jobs:
             # 清理临时文件夹
             rm -rf ipa_contents "$ipa"
             
-            echo -e "$PLIST_FILE \nhttps://github.com/etnAtker/ipa_sideload/releases/download/plist/$PLIST_FILE \nhttps://github.com/etnAtker/ipa_sideload/releases/download/plist/$PLIST_PROXY_FILE\n"
+            RESULT_URLS+="$PLIST_FILE \nhttps://github.com/etnAtker/ipa_sideload/releases/download/plist/$PLIST_FILE \nhttps://github.com/etnAtker/ipa_sideload/releases/download/plist/$PLIST_PROXY_FILE\n"
           done
+
+          echo -e "\nPlists:\n$RESULT_URLS"
