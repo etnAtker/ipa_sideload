@@ -81,6 +81,7 @@ jobs:
             unzip -q "$ipa" -d ipa_contents
             INFO_PLIST=$(find ipa_contents -name "Info.plist" | head -n 1)
 
+            echo "$INFO_PLIST"
             # 使用 PlistBuddy 提取包名、版本号和显示名
             BUNDLE_IDENTIFIER=$(/usr/libexec/PlistBuddy -c "Print CFBundleIdentifier" "$INFO_PLIST")
             BUNDLE_VERSION=$(/usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" "$INFO_PLIST")
