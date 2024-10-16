@@ -69,6 +69,7 @@ jobs:
 
           # 下载并解压每个 ipa，提取 Info.plist 中的包名、版本号和显示名
           IPA_URL_BASE="https://github.com/etnAtker/ipa_sideload/releases/download/ipa"
+          ITMS_URL_BASE="itms-services://?action=download-manifest&url="
           PLIST_TEMPLATE_PATH="plist_template.plist"
           
           RESULT_URLS=""
@@ -101,7 +102,8 @@ jobs:
             # 清理临时文件夹
             rm -rf ipa_contents "$ipa"
             
-            RESULT_URLS+="$PLIST_FILE \nhttps://github.com/etnAtker/ipa_sideload/releases/download/plist/$PLIST_FILE \nhttps://github.com/etnAtker/ipa_sideload/releases/download/plist/$PLIST_PROXY_FILE\n"
+            
+            RESULT_URLS+="$PLIST_FILE \nhttps://github.com/etnAtker/ipa_sideload/releases/download/plist/$ITMS_URL_BASE$PLIST_FILE \nhttps://github.com/etnAtker/ipa_sideload/releases/download/plist/$ITMS_URL_BASE$PLIST_PROXY_FILE\n"
           done
 
           echo -e "\nPlists:\n$RESULT_URLS"
