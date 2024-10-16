@@ -12,14 +12,19 @@ jobs:
   clear_old_releases:
     runs-on: macos-latest
     steps:
-      - name: Clear 'ipa' tag release
+      - name: Install GitHub CLI
+        uses: actions/setup-gh@v1
+  
+      - name: Authenticate GitHub CLI
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh auth login --with-token
+  
+      - name: Clear 'ipa' tag release
         run: |
           gh release delete ipa --yes || echo "No release named 'ipa' found."
+  
       - name: Clear 'plist' tag release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh release delete plist --yes || echo "No release named 'plist' found."
 
