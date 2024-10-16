@@ -1,0 +1,93 @@
+name: Generate Plists
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  clear_old_releases:
+    runs-on: macos-latest
+    steps:
+      - name: Clear 'ipa' tag release
+        run: |
+          gh release delete ipa --yes || echo "No release named 'ipa' found."
+      - name: Clear 'plist' tag release
+        run: |
+          gh release delete plist --yes || echo "No release named 'plist' found."
+
+  upload_ipas:
+    needs: clear_old_releases
+    runs-on: macos-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Upload IPAs to 'ipa' release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # 创建新 release
+          gh release create ipa -t "IPA Release" -n "Release for IPA files"
+          
+          # 遍历指定文件夹中的 ipa 文件，重命名并上传
+          for ipa in ipa/*.ipa; do
+            RANDOM_SUFFIX=$(openssl rand -hex 4)
+            NEW_IPA="${ipa%.ipa}_$RANDOM_SUFFIX.ipa"
+            mv "$ipa" "$NEW_IPA"
+            gh release upload ipa "$NEW_IPA"
+          done
+
+  extract_metadata_and_generate_plists:
+    needs: upload_ipas
+    runs-on: macos-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install dependencies
+        run: |
+          brew install unzip
+
+      - name: Extract metadata from IPAs and generate plist files
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # 创建 plist release
+          gh release create plist -t "Plist Release" -n "Release for Plist files"
+
+          # 下载并解压每个 ipa，提取 Info.plist 中的包名、版本号和显示名
+          IPA_URL_BASE="https://github.com/etnAtker/ipa_sideload/releases/download/ipa"
+          PLIST_TEMPLATE_PATH="plist_template.plist"
+          
+          for ipa in $(gh release view ipa --json assets --jq '.assets[].name'); do
+            # 下载 ipa 文件
+            IPA_URL="$IPA_URL_BASE/$ipa"
+            IPA_PROXY_URL="https://mirror.ghproxy.com/$IPA_URL"
+            curl -L -o "$ipa" "$IPA_URL"
+            
+            # 解压 ipa 获取 Info.plist 文件
+            unzip -q "$ipa" -d ipa_contents
+            INFO_PLIST=$(find ipa_contents -name "Info.plist" | head -n 1)
+
+            # 使用 PlistBuddy 提取包名、版本号和显示名
+            BUNDLE_IDENTIFIER=$(/usr/libexec/PlistBuddy -c "Print CFBundleIdentifier" "$INFO_PLIST")
+            BUNDLE_VERSION=$(/usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" "$INFO_PLIST")
+            DISPLAY_NAME=$(/usr/libexec/PlistBuddy -c "Print CFBundleDisplayName" "$INFO_PLIST")
+            
+            # 生成 plist 文件
+            PLIST_FILE="${ipa%.ipa}.plist"
+            PLIST_PROXY_FILE="${ipa%.ipa}.proxy.plist"
+            
+            sed "s|{{IPA_URL}}|$IPA_URL|g; s|{{BUNDLE_IDENTIFIER}}|$BUNDLE_IDENTIFIER|g; s|{{BUNDLE_VERSION}}|$BUNDLE_VERSION|g; s|{{DISPLAY_NAME}}|$DISPLAY_NAME|g" "$PLIST_TEMPLATE_PATH" > "$PLIST_FILE"
+            sed "s|{{IPA_URL}}|$IPA_PROXY_URL|g; s|{{BUNDLE_IDENTIFIER}}|$BUNDLE_IDENTIFIER|g; s|{{BUNDLE_VERSION}}|$BUNDLE_VERSION|g; s|{{DISPLAY_NAME}}|$DISPLAY_NAME|g" "$PLIST_TEMPLATE_PATH" > "$PLIST_PROXY_FILE"
+             
+            # 上传 plist 文件到 release
+            gh release upload plist "$PLIST_FILE"
+            gh release upload plist "$PLIST_PROXY_FILE"
+            
+            # 清理临时文件夹
+            rm -rf ipa_contents "$ipa"
+            
+            echo -e "$PLIST_FILE \nhttps://github.com/etnAtker/ipa_sideload/releases/download/plist/$PLIST_FILE \nhttps://github.com/etnAtker/ipa_sideload/releases/download/plist/$PLIST_PROXY_FILE\n"
+          done
