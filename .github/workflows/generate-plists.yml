@@ -9,23 +9,7 @@ on:
         required: true
 
 jobs:
-  clear_old_releases:
-    runs-on: macos-latest
-    steps:
-      - name: Clear 'ipa' tag release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh release delete ipa --yes || echo "No release named 'ipa' found."
-  
-      - name: Clear 'plist' tag release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh release delete plist --yes || echo "No release named 'plist' found."
-
   upload_ipas:
-    needs: clear_old_releases
     runs-on: macos-latest
     steps:
       - name: Checkout code
@@ -37,9 +21,12 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          # 删除旧 release
+          gh release delete ipa --yes || echo "No release named 'ipa' found."
+          gh release delete plist --yes || echo "No release named 'plist' found."
+
           # 创建新 release
           gh release create ipa -t "IPAs" -n "IPA files"
-          # 创建 plist release
           gh release create plist -t "Plists" -n "Plist files"
 
           # 各路径模板
@@ -54,7 +41,7 @@ jobs:
             # 重命名并上传ipa
             RANDOM_SUFFIX=$(openssl rand -hex 4)
             NEW_IPA="${ipa%.ipa}_$RANDOM_SUFFIX.ipa"
-            mv "$ipa" "$NEW_IPA"
+            cp "$ipa" "$NEW_IPA"
             gh release upload ipa "$NEW_IPA"
 
             # 解压 ipa 获取 Info.plist 文件
