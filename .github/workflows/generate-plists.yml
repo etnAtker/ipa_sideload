@@ -62,8 +62,8 @@ jobs:
             IPA_URL="$IPA_URL_BASE/$ipa"
             IPA_PROXY_URL="https://mirror.ghproxy.com/$IPA_URL"
             
-            sed "s|{{IPA_URL}}|$IPA_URL|g; s|{{BUNDLE_IDENTIFIER}}|$BUNDLE_IDENTIFIER|g; s|{{BUNDLE_VERSION}}|$BUNDLE_VERSION|g; s|{{DISPLAY_NAME}}|$DISPLAY_NAME|g" "$PLIST_TEMPLATE_PATH" > "$PLIST_FILE"
-            sed "s|{{IPA_URL}}|$IPA_PROXY_URL|g; s|{{BUNDLE_IDENTIFIER}}|$BUNDLE_IDENTIFIER|g; s|{{BUNDLE_VERSION}}|$BUNDLE_VERSION|g; s|{{DISPLAY_NAME}}|$DISPLAY_NAME|g" "$PLIST_TEMPLATE_PATH" > "$PLIST_PROXY_FILE"
+            sed "s|{{IPA_URL}}|$IPA_URL|g; s|{{BUNDLE_IDENTIFIER}}|$BUNDLE_IDENTIFIER|g; s|{{BUNDLE_VERSION}}|$BUNDLE_VERSION|g; s|{{DISPLAY_NAME}}|$DISPLAY_NAME|g" "../$PLIST_TEMPLATE_PATH" > "$PLIST_FILE"
+            sed "s|{{IPA_URL}}|$IPA_PROXY_URL|g; s|{{BUNDLE_IDENTIFIER}}|$BUNDLE_IDENTIFIER|g; s|{{BUNDLE_VERSION}}|$BUNDLE_VERSION|g; s|{{DISPLAY_NAME}}|$DISPLAY_NAME|g" "../$PLIST_TEMPLATE_PATH" > "$PLIST_PROXY_FILE"
              
             # 上传 plist 文件到 release
             gh release upload plist "$PLIST_FILE"
@@ -73,9 +73,9 @@ jobs:
             rm -rf ipa_contents
 
             # 保存结果
-            RESULT_URLS+="${PLIST_FILE} \n${ITMS_URL_BASE}https://github.com/etnAtker/ipa_sideload/releases/download/plist/${PLIST_FILE} \n${ITMS_URL_BASE}https://mirror.ghproxy.com/https://github.com/etnAtker/ipa_sideload/releases/download/plist/${PLIST_PROXY_FILE}\n" 
+            RESULT_URLS+="${PLIST_FILE} \n${ITMS_URL_BASE}https://github.com/etnAtker/ipa_sideload/releases/download/plist/${PLIST_FILE} \n${ITMS_URL_BASE}https://mirror.ghproxy.com/https://github.com/etnAtker/ipa_sideload/releases/download/plist/${PLIST_PROXY_FILE}\n\n" 
           done
 
           # 输出结果至release
-          echo -e "\nPlists:\n$RESULT_URLS" > plist_urls.txt
+          echo -e "Plists:\n$RESULT_URLS" > plist_urls.txt
           gh release upload plist plist_urls.txt
