@@ -37,13 +37,15 @@ jobs:
           RESULT_URLS=""
           
           # 遍历指定文件夹中的 ipa 文件
-          for ipa in ipa/*.ipa; do
+          cd ipa
+          for ipa in *.ipa; do
             # 重命名并上传ipa
             RANDOM_SUFFIX=$(openssl rand -hex 4)
             NEW_IPA="${ipa%.ipa}_$RANDOM_SUFFIX.ipa"
-            cp "$ipa" "$NEW_IPA"
+            mv "$ipa" "$NEW_IPA"
             gh release upload ipa "$NEW_IPA"
 
+            ipa=$NEW_IPA
             # 解压 ipa 获取 Info.plist 文件
             unzip -q "$ipa" -d ipa_contents
             INFO_PLIST=$(find ipa_contents -path "*.app/Info.plist" | head -n 1)
