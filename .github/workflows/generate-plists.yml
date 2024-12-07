@@ -12,9 +12,6 @@ jobs:
   clear_old_releases:
     runs-on: macos-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-  
       - name: Clear 'ipa' tag release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -33,52 +30,33 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          lfs: true
 
       - name: Upload IPAs to 'ipa' release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           # 创建新 release
-          gh release create ipa -t "IPA Release" -n "Release for IPA files"
+          gh release create ipa -t "IPAs" -n "IPA files"
+          # 创建 plist release
+          gh release create plist -t "Plists" -n "Plist files"
+
+          # 各路径模板
+          IPA_URL_BASE="https://github.com/etnAtker/ipa_sideload/releases/download/ipa"
+          ITMS_URL_BASE="itms-services://?action=download-manifest&url="
+          PLIST_TEMPLATE_PATH="plist_template.plist"
+
+          RESULT_URLS=""
           
-          # 遍历指定文件夹中的 ipa 文件，重命名并上传
+          # 遍历指定文件夹中的 ipa 文件
           for ipa in ipa/*.ipa; do
+            # 重命名并上传ipa
             RANDOM_SUFFIX=$(openssl rand -hex 4)
             NEW_IPA="${ipa%.ipa}_$RANDOM_SUFFIX.ipa"
             mv "$ipa" "$NEW_IPA"
             gh release upload ipa "$NEW_IPA"
-          done
 
-  extract_metadata_and_generate_plists:
-    needs: upload_ipas
-    runs-on: macos-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Install dependencies
-        run: |
-          brew install unzip
-
-      - name: Extract metadata from IPAs and generate plist files
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          # 创建 plist release
-          gh release create plist -t "Plist Release" -n "Release for Plist files"
-
-          # 下载并解压每个 ipa，提取 Info.plist 中的包名、版本号和显示名
-          IPA_URL_BASE="https://github.com/etnAtker/ipa_sideload/releases/download/ipa"
-          ITMS_URL_BASE="itms-services://?action=download-manifest&url="
-          PLIST_TEMPLATE_PATH="plist_template.plist"
-          
-          RESULT_URLS=""
-          for ipa in $(gh release view ipa --json assets --jq '.assets[].name'); do
-            # 下载 ipa 文件
-            IPA_URL="$IPA_URL_BASE/$ipa"
-            IPA_PROXY_URL="https://mirror.ghproxy.com/$IPA_URL"
-            curl -L -o "$ipa" "$IPA_URL"
-            
             # 解压 ipa 获取 Info.plist 文件
             unzip -q "$ipa" -d ipa_contents
             INFO_PLIST=$(find ipa_contents -path "*.app/Info.plist" | head -n 1)
@@ -92,6 +70,9 @@ jobs:
             PLIST_FILE="${ipa%.ipa}.plist"
             PLIST_PROXY_FILE="${ipa%.ipa}.proxy.plist"
             
+            IPA_URL="$IPA_URL_BASE/$ipa"
+            IPA_PROXY_URL="https://mirror.ghproxy.com/$IPA_URL"
+            
             sed "s|{{IPA_URL}}|$IPA_URL|g; s|{{BUNDLE_IDENTIFIER}}|$BUNDLE_IDENTIFIER|g; s|{{BUNDLE_VERSION}}|$BUNDLE_VERSION|g; s|{{DISPLAY_NAME}}|$DISPLAY_NAME|g" "$PLIST_TEMPLATE_PATH" > "$PLIST_FILE"
             sed "s|{{IPA_URL}}|$IPA_PROXY_URL|g; s|{{BUNDLE_IDENTIFIER}}|$BUNDLE_IDENTIFIER|g; s|{{BUNDLE_VERSION}}|$BUNDLE_VERSION|g; s|{{DISPLAY_NAME}}|$DISPLAY_NAME|g" "$PLIST_TEMPLATE_PATH" > "$PLIST_PROXY_FILE"
              
@@ -100,10 +81,12 @@ jobs:
             gh release upload plist "$PLIST_PROXY_FILE"
             
             # 清理临时文件夹
-            rm -rf ipa_contents "$ipa"
-            
-            
-            RESULT_URLS+="${PLIST_FILE} \n${ITMS_URL_BASE}https://github.com/etnAtker/ipa_sideload/releases/download/plist/${PLIST_FILE} \n${ITMS_URL_BASE}https://mirror.ghproxy.com/https://github.com/etnAtker/ipa_sideload/releases/download/plist/${PLIST_PROXY_FILE}\n"
+            rm -rf ipa_contents
+
+            # 保存结果
+            RESULT_URLS+="${PLIST_FILE} \n${ITMS_URL_BASE}https://github.com/etnAtker/ipa_sideload/releases/download/plist/${PLIST_FILE} \n${ITMS_URL_BASE}https://mirror.ghproxy.com/https://github.com/etnAtker/ipa_sideload/releases/download/plist/${PLIST_PROXY_FILE}\n" 
           done
 
-          echo -e "\nPlists:\n$RESULT_URLS"
+          # 输出结果至release
+          echo -e "\nPlists:\n$RESULT_URLS" > plist_urls.txt
+          gh release upload plist plist_urls.txt
