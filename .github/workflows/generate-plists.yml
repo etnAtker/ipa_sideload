@@ -79,4 +79,4 @@ jobs:
           # 输出结果至release
           echo -e "Plists:\n$RESULT_URLS" > plist_urls.txt
           gh release upload plist plist_urls.txt
-          gh release edit plist -n "Plists:\n$RESULT_URLS"
+          gh release edit plist -F plist_urls.txt
