@@ -77,6 +77,6 @@ jobs:
           done
 
           # 输出结果至release
-          echo -e "# Plists:\n$RESULT_URLS" > plist_urls.md
+          echo -e "$RESULT_URLS" > plist_urls.md
           gh release upload plist plist_urls.md
           gh release edit plist -F plist_urls.md
