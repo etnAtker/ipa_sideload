@@ -73,10 +73,10 @@ jobs:
             rm -rf ipa_contents
 
             # 保存结果
-            RESULT_URLS+="${PLIST_FILE} \n${ITMS_URL_BASE}https://github.com/etnAtker/ipa_sideload/releases/download/plist/${PLIST_FILE} \n${ITMS_URL_BASE}https://mirror.ghproxy.com/https://github.com/etnAtker/ipa_sideload/releases/download/plist/${PLIST_PROXY_FILE}\n\n" 
+            RESULT_URLS+="## ${PLIST_FILE} \n${ITMS_URL_BASE}https://github.com/etnAtker/ipa_sideload/releases/download/plist/${PLIST_FILE} \n${ITMS_URL_BASE}https://mirror.ghproxy.com/https://github.com/etnAtker/ipa_sideload/releases/download/plist/${PLIST_PROXY_FILE}\n\n" 
           done
 
           # 输出结果至release
-          echo -e "Plists:\n$RESULT_URLS" > plist_urls.txt
-          gh release upload plist plist_urls.txt
-          gh release edit plist -F plist_urls.txt
+          echo -e "# Plists:\n$RESULT_URLS" > plist_urls.md
+          gh release upload plist plist_urls.md
+          gh release edit plist -F plist_urls.md
