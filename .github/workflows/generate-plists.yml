@@ -1,12 +1,7 @@
 name: Generate Plists
 
 on:
-  workflow_dispatch:
-    inputs:
-      branch:
-        description: 'Branch to run workflow on'
-        default: 'main'
-        required: true
+  push
 
 jobs:
   upload_ipas:
